@@ -1,0 +1,47 @@
+# ── Java / Maven ──────────────────────────────
+target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/wrapper/maven-wrapper.jar
+
+# ── IDE ───────────────────────────────────────
+.idea/
+*.iml
+.eclipse/
+.settings/
+.classpath
+.project
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.vscode/
+
+# ── Environment — NEVER COMMIT ────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Node / Frontend ───────────────────────────
+node_modules/
+dist/
+globex-frontend/dist/
+*.log
+npm-debug.log*
+
+# ── OS ────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Spring Boot ───────────────────────────────
+spring.log
+*.pid
+
+# ── Test / Coverage ───────────────────────────
+/globex-backend/target/
+coverage/
+*.lcov

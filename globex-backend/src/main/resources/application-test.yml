@@ -1,0 +1,33 @@
+# =============================================================================
+# GlobeX AI — Test Profile Configuration
+# =============================================================================
+# Active for: mvn test
+# Uses an in-memory H2 DB substitute via Testcontainers for integration tests.
+# Redis is mocked in unit tests; Testcontainers used for integration tests.
+# =============================================================================
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:globex_test}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  flyway:
+    enabled: true
+    clean-disabled: false                   # Allow clean in test environment only
+
+  jpa:
+    show-sql: false
+
+  # Redis — disabled in unit tests (mocked via @MockBean or embedded)
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6380}              # Different port to avoid conflict with dev
+
+logging:
+  level:
+    com.globex: WARN
+    org.springframework.security: WARN
+    org.flywaydb: WARN

@@ -1,0 +1,256 @@
+# =============================================================================
+# GlobeX AI — Backend Configuration
+# =============================================================================
+# This file contains the BASE configuration shared across all environments.
+# Environment-specific overrides live in:
+#   application-dev.yml   (local development)
+#   application-prod.yml  (production — values from environment variables only)
+#
+# RULE: Never hardcode secrets here. Always use ${ENV_VAR:default} syntax.
+# =============================================================================
+
+spring:
+  application:
+    name: globex-backend
+
+  # ── Active profile set via environment variable ──────────────────────────
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  # ── Jackson (JSON serialization) ──────────────────────────────────────────
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false       # Use ISO-8601 strings for dates
+      fail-on-empty-beans: false
+    deserialization:
+      fail-on-unknown-properties: false      # Ignore extra fields in requests
+    default-property-inclusion: non_null     # Don't include null fields in response
+
+  # ── JPA / Hibernate ──────────────────────────────────────────────────────
+  jpa:
+    open-in-view: false                      # IMPORTANT: Disable OSIV to avoid connection leaks
+    show-sql: false                          # Set true in dev profile only
+    hibernate:
+      ddl-auto: validate                     # Flyway manages schema — Hibernate only validates
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          batch_size: 25                     # Batch inserts for performance
+          order_inserts: true
+          order_updates: true
+        cache:
+          use_second_level_cache: false      # Disabled — Redis is our cache
+
+  # ── Flyway — Database migration ───────────────────────────────────────────
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+    validate-on-migrate: true
+    out-of-order: false
+    # SQL scripts named: V1__description.sql, V2__description.sql, ...
+
+  # ── Redis ─────────────────────────────────────────────────────────────────
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}          # Empty = no password (dev default)
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+  # ── Cache (Spring Cache over Redis) ──────────────────────────────────────────
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000        # 1 hour default TTL (milliseconds)
+      cache-null-values: false     # Don't cache nulls — avoids caching 404s
+
+  # ── Mail (for email verification and password reset) ──────────────────────
+  mail:
+    host: ${MAIL_HOST:smtp.mailtrap.io}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+# ── Server ───────────────────────────────────────────────────────────────────
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/plain
+    min-response-size: 1024
+  error:
+    # Disable Spring Boot's default /error page — our GlobalExceptionHandler handles everything
+    whitelabel:
+      enabled: false
+    include-message: never                   # Don't leak internal error messages
+    include-stacktrace: never
+
+# ── Actuator — Health / Metrics / Info ───────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,loggers
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized          # Full health details for ADMIN role only
+      show-components: always
+  info:
+    env:
+      enabled: true
+  health:
+    redis:
+      enabled: true
+    db:
+      enabled: true
+
+# ── Application Info (shown at /actuator/info) ───────────────────────────────
+info:
+  app:
+    name: GlobeX AI
+    description: "Explore the World. Understand the Culture. Plan Better. Travel Safely."
+    version: 1.0.0-SNAPSHOT
+    phase: "Phase 1 — Foundation"
+
+# ── OpenAPI / SpringDoc ───────────────────────────────────────────────────────
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: alpha
+    tags-sorter: alpha
+    display-request-duration: true
+    try-it-out-enabled: true
+  show-actuator: false
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+logging:
+  pattern:
+    # Structured log format: timestamp | level | correlation-id | logger | message
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{requestId:-NO_REQ_ID}] %logger{36} - %msg%n"
+  level:
+    root: INFO
+    com.globex: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.flywaydb: INFO
+
+# ── GlobeX Custom Properties ──────────────────────────────────────────────────
+# These are read via @ConfigurationProperties classes in the shared.config package
+globex:
+  # JWT configuration
+  jwt:
+    secret: ${JWT_SECRET:ThisIsADevelopmentSecretKeyThatMustBeChangedInProduction256Bits}
+    access-token-expiry-minutes: ${JWT_ACCESS_EXPIRY_MINUTES:15}
+    refresh-token-expiry-days: ${JWT_REFRESH_EXPIRY_DAYS:30}
+
+  # CORS — allowed origins (comma-separated in production)
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
+
+  # Rate limiting (login attempts)
+  rate-limit:
+    login:
+      capacity: 5
+      refill-minutes: 15
+
+  # Application base URL (used in email links)
+  app:
+    base-url: ${APP_BASE_URL:http://localhost:8080}
+    frontend-url: ${FRONTEND_URL:http://localhost:5173}
+
+  # Email verification token expiry
+  email:
+    verification-expiry-hours: 24
+    password-reset-expiry-hours: 2
+
+  # Redis key prefixes
+  redis:
+    key-prefix: "globex:"
+    token-blocklist-prefix: "globex:token:blocklist:"
+    rate-limit-prefix: "globex:ratelimit:"
+    cache-prefix: "globex:cache:"
+
+  # ── Phase 4: External Integration Providers ─────────────────────────────────
+  integration:
+
+    # Weather — Open-Meteo (no API key, CC BY 4.0, non-commercial free)
+    weather:
+      provider: open-meteo
+      base-url: "https://api.open-meteo.com/v1"
+      connect-timeout-ms: 5000
+      read-timeout-ms: 10000
+      current-ttl-minutes: 10       # Current weather TTL
+      forecast-ttl-minutes: 30      # Hourly/daily forecast TTL
+
+    # Currency — Frankfurter (ECB data, daily updates, no API key)
+    currency:
+      provider: frankfurter
+      base-url: "https://api.frankfurter.app"
+      connect-timeout-ms: 5000
+      read-timeout-ms: 8000
+      rates-ttl-hours: 6            # Rates update once/day; 6h is conservative
+
+    # Places — Overpass API (OpenStreetMap, ODbL license, no API key)
+    places:
+      provider: overpass
+      base-url: "https://overpass-api.de/api/interpreter"
+      connect-timeout-ms: 8000
+      read-timeout-ms: 30000        # Overpass queries can be slow
+      places-ttl-hours: 24          # Venue data is stable
+      default-radius-meters: 3000   # Search radius around destination
+      max-results: 20               # Max places per query
+
+    # Images — Unsplash (requires API key, attribution mandatory)
+    # Set IMAGE_PROVIDER=mock in dev if UNSPLASH_ACCESS_KEY is not available
+    images:
+      provider: ${IMAGE_PROVIDER:mock}   # "unsplash" or "mock"
+      access-key: ${UNSPLASH_ACCESS_KEY:}
+      base-url: "https://api.unsplash.com"
+      connect-timeout-ms: 5000
+      read-timeout-ms: 10000
+      images-ttl-hours: 6
+      utm-source: "globex_ai"
+
+    # Geocoding — Nominatim (OpenStreetMap, ODbL, 1 req/sec limit)
+    geocoding:
+      provider: nominatim
+      base-url: "https://nominatim.openstreetmap.org"
+      connect-timeout-ms: 5000
+      read-timeout-ms: 10000
+      user-agent: "GlobeX-AI/1.0 (portfolio; pradhanbikash998@gmail.com)"
+      ttl-days: 7
+
+    # Phase 5: Flights — Duffel API (OAuth Bearer token, test mode available)
+    # Token must NOT be committed to Git. Use env var DUFFEL_API_TOKEN.
+    duffel:
+      api-token: ${DUFFEL_API_TOKEN:}
+      base-url: "https://api.duffel.com"
+      api-version: "v2"
+      connect-timeout-ms: 10000
+      read-timeout-ms: 30000
+      flight-offer-ttl-minutes: 5    # Prices can change — short cache only
+      max-offers-to-return: 50       # Limit results per search
