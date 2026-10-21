@@ -9,9 +9,9 @@ function fmt(n: number, currency: string) {
 
 export function BudgetOverview({ budget }: Props) {
   const cards = [
-    { label: 'Planned Total', value: budget.plannedTotal, color: 'text-blue-400' },
-    { label: 'Actual Spent', value: budget.actualTotal, color: 'text-amber-400' },
-    ...(budget.budgetLimit != null ? [{ label: budget.isOverBudget ? '⚠ Over Budget' : 'Remaining', value: budget.remaining ?? 0, color: budget.isOverBudget ? 'text-red-400' : 'text-green-400' }] : []),
+    { label: 'Planned Total', value: budget.plannedTotal, color: 'var(--color-ocean)' },
+    { label: 'Actual Spent', value: budget.actualTotal, color: '#D97706' },
+    ...(budget.budgetLimit != null ? [{ label: budget.isOverBudget ? '⚠ Over Budget' : 'Remaining', value: budget.remaining ?? 0, color: budget.isOverBudget ? '#DC2626' : '#16A34A' }] : []),
   ];
 
   const planBreakdown = [
@@ -20,25 +20,32 @@ export function BudgetOverview({ budget }: Props) {
     { label: '🎭 Activities', value: budget.plannedActivities },
   ].filter(x => x.value > 0);
 
+  const cardStyle: React.CSSProperties = {
+    background: 'var(--color-surface)',
+    border: '1px solid var(--color-border)',
+    borderRadius: 'var(--radius-lg)',
+    padding: '1rem',
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
         {cards.map(c => (
-          <div key={c.label} className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4">
-            <p className="text-slate-400 text-xs mb-1">{c.label}</p>
-            <p className={`text-lg font-bold ${c.color}`}>{fmt(c.value, budget.currency)}</p>
+          <div key={c.label} style={cardStyle}>
+            <p style={{ color: 'var(--color-slate)', fontSize: '0.75rem', marginBottom: '0.25rem' }}>{c.label}</p>
+            <p style={{ fontSize: '1.125rem', fontWeight: 700, color: c.color }}>{fmt(c.value, budget.currency)}</p>
           </div>
         ))}
       </div>
 
       {planBreakdown.length > 0 && (
         <div>
-          <h4 className="text-slate-300 text-sm font-medium mb-3">Planned Breakdown</h4>
-          <div className="space-y-2">
+          <h4 style={{ color: 'var(--color-navy)', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.75rem' }}>Planned Breakdown</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {planBreakdown.map(b => (
-              <div key={b.label} className="flex justify-between text-sm">
-                <span className="text-slate-400">{b.label}</span>
-                <span className="text-slate-200">{fmt(b.value, budget.currency)}</span>
+              <div key={b.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                <span style={{ color: 'var(--color-slate)' }}>{b.label}</span>
+                <span style={{ color: 'var(--color-navy)', fontWeight: 600 }}>{fmt(b.value, budget.currency)}</span>
               </div>
             ))}
           </div>
@@ -47,12 +54,12 @@ export function BudgetOverview({ budget }: Props) {
 
       {Object.keys(budget.actualByCategory).length > 0 && (
         <div>
-          <h4 className="text-slate-300 text-sm font-medium mb-3">Actual Expenses by Category</h4>
+          <h4 style={{ color: 'var(--color-navy)', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.75rem' }}>Actual Expenses by Category</h4>
           <BudgetCategoryBar budget={budget} />
         </div>
       )}
 
-      <p className="text-xs text-slate-500 italic">{budget.currencyNote}</p>
+      <p style={{ fontSize: '0.75rem', color: 'var(--color-slate)', fontStyle: 'italic' }}>{budget.currencyNote}</p>
     </div>
   );
 }

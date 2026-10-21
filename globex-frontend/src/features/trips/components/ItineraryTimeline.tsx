@@ -19,10 +19,10 @@ function ItemForm({ onSubmit, onCancel, initial }: { onSubmit: (r: CreateItinera
     catch (err) { setError(err instanceof Error ? err.message : 'Failed'); }
     finally { setLoading(false); }
   }
-  const inp = "w-full bg-slate-700/50 border border-slate-600 text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500";
+  const inp = "w-full border border-slate-200 text-slate-800 bg-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-200";
   const TYPES: ItemType[] = ['FLIGHT','HOTEL','ACTIVITY','MEAL','TRANSPORT','FREE_TIME','OTHER'];
   return (
-    <form onSubmit={submit} className="space-y-3 p-3 bg-slate-800/80 border border-slate-700 rounded-xl">
+    <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '0.75rem', background: 'var(--color-ivory)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)' }}>
       <div className="grid grid-cols-2 gap-2">
         <div><label className="text-xs text-slate-400">Title *</label><input value={f.title} onChange={e => set('title',e.target.value)} className={inp} placeholder="e.g. Visit Tokyo Tower" /></div>
         <div><label className="text-xs text-slate-400">Type</label>
@@ -51,7 +51,7 @@ function ItemForm({ onSubmit, onCancel, initial }: { onSubmit: (r: CreateItinera
 
 interface Props { days: ItineraryDay[]; tripId: string; onAddItem: (dayId: string, req: CreateItineraryItemRequest) => Promise<void>; onDeleteItem: (dayId: string, itemId: string) => Promise<void>; onDeleteDay: (dayId: string) => Promise<void>; onMoveItem: (dayId: string, items: { itemId: string; sortOrder: number }[]) => Promise<void>; }
 
-export function ItineraryTimeline({ days, onAddItem, onDeleteItem, onDeleteDay, onMoveItem }: Props) {
+export function ItineraryTimeline({ days, onAddItem, onDeleteItem, onDeleteDay: _onDeleteDay, onMoveItem }: Props) {
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const toggle = (id: string) => setCollapsed(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -69,34 +69,34 @@ export function ItineraryTimeline({ days, onAddItem, onDeleteItem, onDeleteDay, 
   return (
     <div className="space-y-4">
       {days.map(day => (
-        <div key={day.id} className="bg-slate-800/50 border border-slate-700/60 rounded-xl overflow-hidden">
-          <div className="flex items-center gap-3 p-3 cursor-pointer hover:bg-slate-700/30" onClick={() => toggle(day.id)}>
-            <span className="text-blue-400 font-bold text-sm min-w-[3rem]">Day {day.dayNumber}</span>
-            <span className="text-slate-200 text-sm font-medium flex-1">{day.title ?? day.date}</span>
-            <span className="text-slate-500 text-xs">{day.date}</span>
-            <span className="text-slate-500 text-xs">{collapsed.has(day.id) ? '▸' : '▾'}</span>
+        <div key={day.id} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', cursor: 'pointer', borderBottom: '1px solid var(--color-border)' }} onClick={() => toggle(day.id)}>
+            <span style={{ color: 'var(--color-ocean)', fontWeight: 700, fontSize: '0.875rem', minWidth: '3rem' }}>Day {day.dayNumber}</span>
+            <span style={{ color: 'var(--color-navy)', fontSize: '0.875rem', fontWeight: 500, flex: 1 }}>{day.title ?? day.date}</span>
+            <span style={{ color: 'var(--color-slate)', fontSize: '0.75rem' }}>{day.date}</span>
+            <span style={{ color: 'var(--color-slate)', fontSize: '0.75rem' }}>{collapsed.has(day.id) ? '▸' : '▾'}</span>
           </div>
           {!collapsed.has(day.id) && (
-            <div className="px-3 pb-3 space-y-2 border-t border-slate-700/40 pt-2">
-              {day.items.length === 0 && <p className="text-slate-600 text-xs py-2 text-center">No items yet</p>}
+            <div style={{ padding: '0 0.75rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.5rem' }}>
+              {day.items.length === 0 && <p style={{ color: 'var(--color-slate)', fontSize: '0.75rem', textAlign: 'center', padding: '0.5rem 0' }}>No items yet</p>}
               {day.items.map((item, idx) => (
-                <div key={item.id} className="flex items-start gap-2 py-1.5 px-2 bg-slate-700/30 rounded-lg group">
-                  <span className="text-base mt-0.5">{TYPE_EMOJI[item.itemType]}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white">{item.title}</p>
-                    <p className="text-xs text-slate-400">{item.startTime ? `${item.startTime}${item.endTime ? ` – ${item.endTime}` : ''}` : ''} {item.locationName ? `· ${item.locationName}` : ''}</p>
-                    {item.estimatedCost > 0 && <p className="text-xs text-slate-400">{item.currency} {item.estimatedCost.toLocaleString()}</p>}
+                <div key={item.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.5rem', background: 'var(--color-ivory)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}>
+                  <span style={{ fontSize: '1rem', marginTop: '0.125rem' }}>{TYPE_EMOJI[item.itemType]}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--color-navy)' }}>{item.title}</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--color-slate)' }}>{item.startTime ? `${item.startTime}${item.endTime ? ` – ${item.endTime}` : ''}` : ''} {item.locationName ? `· ${item.locationName}` : ''}</p>
+                    {item.estimatedCost > 0 && <p style={{ fontSize: '0.75rem', color: 'var(--color-slate)' }}>{item.currency} {item.estimatedCost.toLocaleString()}</p>}
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => moveUp(day, item)} disabled={idx === 0} className="p-1 text-slate-500 hover:text-slate-300 disabled:opacity-30 text-xs" title="Move up" aria-label="Move item up">▲</button>
-                    <button onClick={() => moveDown(day, item)} disabled={idx === day.items.length-1} className="p-1 text-slate-500 hover:text-slate-300 disabled:opacity-30 text-xs" title="Move down" aria-label="Move item down">▼</button>
-                    <button onClick={() => onDeleteItem(day.id, item.id)} className="p-1 text-slate-500 hover:text-red-400 text-xs" aria-label="Delete item">✕</button>
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    <button onClick={() => moveUp(day, item)} disabled={idx === 0} style={{ padding: '0.25rem', color: 'var(--color-slate)', background: 'none', border: 'none', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1, fontSize: '0.75rem' }} title="Move up" aria-label="Move item up">▲</button>
+                    <button onClick={() => moveDown(day, item)} disabled={idx === day.items.length-1} style={{ padding: '0.25rem', color: 'var(--color-slate)', background: 'none', border: 'none', cursor: idx === day.items.length-1 ? 'not-allowed' : 'pointer', opacity: idx === day.items.length-1 ? 0.3 : 1, fontSize: '0.75rem' }} title="Move down" aria-label="Move item down">▼</button>
+                    <button onClick={() => onDeleteItem(day.id, item.id)} style={{ padding: '0.25rem', color: 'var(--color-slate)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.75rem' }} aria-label="Delete item">✕</button>
                   </div>
                 </div>
               ))}
               {addingTo === day.id
                 ? <ItemForm onSubmit={async req => { await onAddItem(day.id, req); setAddingTo(null); }} onCancel={() => setAddingTo(null)} />
-                : <button onClick={() => setAddingTo(day.id)} className="w-full text-xs text-slate-500 hover:text-blue-400 py-2 border border-dashed border-slate-700 rounded-lg hover:border-blue-500/40 transition-colors">+ Add item to Day {day.dayNumber}</button>
+                : <button onClick={() => setAddingTo(day.id)} style={{ width: '100%', fontSize: '0.75rem', color: 'var(--color-teal)', padding: '0.5rem', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-md)', background: 'none', cursor: 'pointer', transition: 'border-color 0.2s, color 0.2s' }}>+ Add item to Day {day.dayNumber}</button>
               }
             </div>
           )}

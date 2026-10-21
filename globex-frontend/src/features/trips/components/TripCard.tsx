@@ -14,36 +14,48 @@ function fmt(d: string) {
 export function TripCard({ trip, onArchive }: Props) {
   const img = trip.destinationImageUrl;
   return (
-    <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl overflow-hidden hover:border-blue-500/40 transition-all group">
+    <div style={{
+      background: 'var(--color-surface)',
+      border: '1px solid var(--color-border)',
+      borderRadius: 'var(--radius-xl)',
+      overflow: 'hidden',
+      boxShadow: 'var(--shadow-sm)',
+      transition: 'box-shadow 0.2s, border-color 0.2s',
+    }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-md)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-teal)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-sm)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'; }}
+    >
       {img && (
-        <div className="h-36 overflow-hidden">
-          <img src={img} alt={trip.destinationName ?? trip.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        <div style={{ height: '9rem', overflow: 'hidden' }}>
+          <img src={img} alt={trip.destinationName ?? trip.title} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.05)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1)'; }} />
         </div>
       )}
       {!img && (
-        <div className="h-36 bg-gradient-to-br from-blue-900/40 to-purple-900/40 flex items-center justify-center">
-          <span className="text-4xl">✈️</span>
+        <div style={{ height: '9rem', background: 'linear-gradient(135deg, var(--color-ocean) 0%, var(--color-teal) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ fontSize: '2.5rem' }}>✈️</span>
         </div>
       )}
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <h3 className="text-white font-semibold text-sm leading-tight line-clamp-2">{trip.title}</h3>
+      <div style={{ padding: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.25rem' }}>
+          <h3 style={{ color: 'var(--color-navy)', fontWeight: 600, fontSize: '0.9rem', lineHeight: 1.3, margin: 0 }}>{trip.title}</h3>
           <TripStatusBadge status={trip.status} />
         </div>
-        {trip.destinationName && <p className="text-slate-400 text-xs mb-2">📍 {trip.destinationName}</p>}
-        <p className="text-slate-400 text-xs mb-3">{fmt(trip.startDate)} — {fmt(trip.endDate)}</p>
-        <div className="flex flex-wrap gap-3 text-xs text-slate-400 mb-4">
+        {trip.destinationName && <p style={{ color: 'var(--color-slate)', fontSize: '0.8rem', marginBottom: '0.4rem' }}>📍 {trip.destinationName}</p>}
+        <p style={{ color: 'var(--color-slate)', fontSize: '0.8rem', marginBottom: '0.75rem' }}>{fmt(trip.startDate)} — {fmt(trip.endDate)}</p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', fontSize: '0.75rem', color: 'var(--color-slate)', marginBottom: '1rem' }}>
           <span>👤 {trip.travelerCount}</span>
           <span>✈️ {trip.flightCount}</span>
           <span>🏨 {trip.hotelCount}</span>
           <span>🎭 {trip.activityCount}</span>
           {trip.budgetLimit && <span>💰 {trip.currency} {trip.budgetLimit.toLocaleString()}</span>}
         </div>
-        <div className="flex gap-2">
-          <Link to={`/trips/${trip.id}`} className="flex-1 text-center text-xs py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium">View Trip</Link>
-          <Link to={`/trips/${trip.id}/edit`} className="px-3 text-xs py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors">Edit</Link>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <Link to={`/trips/${trip.id}`} style={{ flex: 1, textAlign: 'center', fontSize: '0.8rem', padding: '0.5rem', background: 'var(--color-navy)', color: '#fff', borderRadius: 'var(--radius-md)', textDecoration: 'none', fontWeight: 600, transition: 'background 0.2s' }}>View Trip</Link>
+          <Link to={`/trips/${trip.id}/edit`} style={{ padding: '0.5rem 0.75rem', fontSize: '0.8rem', background: 'var(--color-sand)', color: 'var(--color-navy)', borderRadius: 'var(--radius-md)', textDecoration: 'none', transition: 'background 0.2s' }}>Edit</Link>
           {onArchive && (
-            <button onClick={() => onArchive(trip.id)} className="px-3 text-xs py-2 bg-slate-700 hover:bg-red-800/40 text-slate-400 hover:text-red-400 rounded-lg transition-colors">Archive</button>
+            <button onClick={() => onArchive(trip.id)} style={{ padding: '0.5rem 0.75rem', fontSize: '0.8rem', background: 'var(--color-sand)', color: 'var(--color-slate)', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', transition: 'color 0.2s' }}>Archive</button>
           )}
         </div>
       </div>

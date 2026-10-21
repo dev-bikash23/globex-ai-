@@ -29,44 +29,44 @@ export function ExpenseForm({ onSubmit, onCancel, initial }: Props) {
     finally { setLoading(false); }
   }
 
-  const inputClass = "w-full bg-slate-700/50 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500";
+  const inputClass = "w-full border border-slate-200 bg-white text-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-200";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
         <div>
-          <label className="block text-xs text-slate-400 mb-1">Category</label>
+          <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-slate)', marginBottom: '0.25rem' }}>Category</label>
           <select value={category} onChange={e => setCategory(e.target.value as ExpenseCategory)} className={inputClass}>
             {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-xs text-slate-400 mb-1">Currency</label>
+          <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-slate)', marginBottom: '0.25rem' }}>Currency</label>
           <input value={currency} onChange={e => setCurrency(e.target.value.toUpperCase().slice(0,3))} maxLength={3} className={inputClass} placeholder="USD" />
         </div>
       </div>
       <div>
-        <label className="block text-xs text-slate-400 mb-1">Description *</label>
+        <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-slate)', marginBottom: '0.25rem' }}>Description *</label>
         <input value={description} onChange={e => setDescription(e.target.value)} className={inputClass} placeholder="What was this for?" required />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
         <div>
-          <label className="block text-xs text-slate-400 mb-1">Amount *</label>
+          <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-slate)', marginBottom: '0.25rem' }}>Amount *</label>
           <input type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} className={inputClass} placeholder="0.00" required />
         </div>
         <div>
-          <label className="block text-xs text-slate-400 mb-1">Date</label>
+          <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-slate)', marginBottom: '0.25rem' }}>Date</label>
           <input type="date" value={expenseDate} onChange={e => setExpenseDate(e.target.value)} className={inputClass} />
         </div>
       </div>
       <div>
-        <label className="block text-xs text-slate-400 mb-1">Notes</label>
+        <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-slate)', marginBottom: '0.25rem' }}>Notes</label>
         <input value={notes} onChange={e => setNotes(e.target.value)} className={inputClass} placeholder="Optional notes" />
       </div>
-      {error && <p className="text-red-400 text-xs">{error}</p>}
-      <div className="flex gap-3 justify-end">
-        <button type="button" onClick={onCancel} className="px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
-        <button type="submit" disabled={loading} className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50">
+      {error && <p style={{ color: '#DC2626', fontSize: '0.75rem' }}>{error}</p>}
+      <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+        <button type="button" onClick={onCancel} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', color: 'var(--color-slate)', background: 'var(--color-sand)', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}>Cancel</button>
+        <button type="submit" disabled={loading} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', background: 'var(--color-navy)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', opacity: loading ? 0.5 : 1 }}>
           {loading ? 'Saving…' : 'Save Expense'}
         </button>
       </div>

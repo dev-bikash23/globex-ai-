@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import Navbar from '../../components/layout/Navbar';
+import Footer from '../../components/layout/Footer';
 import LocationAutocomplete from '../../components/search/LocationAutocomplete';
 import TravelerSelector from '../../components/search/TravelerSelector';
 import FlightResultsList from '../../components/flights/FlightResultsList';
@@ -9,11 +10,7 @@ import ActivityResultsList from '../../components/activities/ActivityResultsList
 import { useFlightSearch } from '../../hooks/useFlightSearch';
 import { useHotelSearch } from '../../hooks/useHotelSearch';
 import { useActivitySearch } from '../../hooks/useActivitySearch';
-import type {
-  LocationSuggestion,
-  FlightOffer,
-  CabinClass,
-} from '../../types/phase5.types';
+import type { LocationSuggestion, FlightOffer, CabinClass } from '../../types/phase5.types';
 
 type Tab = 'flights' | 'hotels' | 'activities';
 
@@ -24,52 +21,67 @@ const inDays = (n: number) => {
   return d.toISOString().split('T')[0];
 };
 
+const TAB_CONFIG = [
+  { key: 'flights' as Tab,    icon: '✈️', label: 'Flights' },
+  { key: 'hotels' as Tab,     icon: '🏨', label: 'Hotels' },
+  { key: 'activities' as Tab, icon: '🎟️', label: 'Activities' },
+];
+
+/** Reusable label style for the light search page */
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: '0.75rem',
+  fontWeight: 600,
+  color: 'var(--color-slate)',
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+  marginBottom: '0.4rem',
+};
+
 export default function SearchPage() {
   const [activeTab, setActiveTab] = useState<Tab>('flights');
 
-  // ── Flight form state ─────────────────────────────────────────────────────
-  const [origin, setOrigin] = useState('');
-  const [originSugg, setOriginSugg] = useState<LocationSuggestion | null>(null);
-  const [dest, setDest] = useState('');
-  const [destSugg, setDestSugg] = useState<LocationSuggestion | null>(null);
-  const [depDate, setDepDate] = useState(inDays(14));
-  const [retDate, setRetDate] = useState('');
-  const [isRound, setIsRound] = useState(false);
-  const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
-  const [infants, setInfants] = useState(0);
-  const [cabinClass, setCabinClass] = useState<CabinClass>('ECONOMY');
-  const [flightSort, setFlightSort] = useState('CHEAPEST');
-  const [stopFilter, setStopFilter] = useState<number[]>([]);
-  const [airlineFilter, setAirlineFilter] = useState<string[]>([]);
-  const [maxPriceFilter, setMaxPriceFilter] = useState(99999);
+  // ── Flight form state ────────────────────────────────────────────
+  const [origin, setOrigin]                     = useState('');
+  const [, setOriginSugg]                       = useState<LocationSuggestion | null>(null);
+  const [dest, setDest]                         = useState('');
+  const [, setDestSugg]                         = useState<LocationSuggestion | null>(null);
+  const [depDate, setDepDate]                   = useState(inDays(14));
+  const [retDate, setRetDate]                   = useState('');
+  const [isRound, setIsRound]                   = useState(false);
+  const [adults, setAdults]                     = useState(1);
+  const [children, setChildren]                 = useState(0);
+  const [infants, setInfants]                   = useState(0);
+  const [cabinClass, setCabinClass]             = useState<CabinClass>('ECONOMY');
+  const [flightSort, setFlightSort]             = useState('CHEAPEST');
+  const [stopFilter, setStopFilter]             = useState<number[]>([]);
+  const [airlineFilter, setAirlineFilter]       = useState<string[]>([]);
+  const [maxPriceFilter, setMaxPriceFilter]     = useState(99999);
   const [filtersInitialized, setFiltersInitialized] = useState(false);
 
-  // ── Hotel form state ───────────────────────────────────────────────────────
-  const [hotelDest, setHotelDest] = useState('');
-  const [checkIn, setCheckIn] = useState(inDays(14));
-  const [checkOut, setCheckOut] = useState(inDays(17));
+  // ── Hotel form state ─────────────────────────────────────────────
+  const [hotelDest, setHotelDest]   = useState('');
+  const [checkIn, setCheckIn]       = useState(inDays(14));
+  const [checkOut, setCheckOut]     = useState(inDays(17));
   const [hotelAdults, setHotelAdults] = useState(2);
-  const [hotelRooms, setHotelRooms] = useState(1);
-  const [hotelSort, setHotelSort] = useState('RECOMMENDED');
+  const [hotelRooms, setHotelRooms]   = useState(1);
+  const [hotelSort, setHotelSort]     = useState('RECOMMENDED');
 
-  // ── Activity form state ────────────────────────────────────────────────────
-  const [actDest, setActDest] = useState('');
-  const [actCategory, setActCategory] = useState('ALL');
+  // ── Activity form state ──────────────────────────────────────────
+  const [actDest, setActDest]               = useState('');
+  const [actCategory, setActCategory]       = useState('ALL');
   const [actParticipants, setActParticipants] = useState(2);
 
-  // ── Hooks ─────────────────────────────────────────────────────────────────
+  // ── Hooks ────────────────────────────────────────────────────────
   const flightSearch = useFlightSearch();
   const hotelSearch  = useHotelSearch();
   const actSearch    = useActivitySearch();
 
-  // ── Flight search submit ──────────────────────────────────────────────────
   const handleFlightSearch = useCallback(() => {
     if (!origin || !dest || !depDate) return;
     setStopFilter([]);
     setAirlineFilter([]);
     setFiltersInitialized(false);
-
     flightSearch.search({
       origin, destination: dest,
       departureDate: depDate,
@@ -79,404 +91,251 @@ export default function SearchPage() {
     }).then(() => {});
   }, [origin, dest, depDate, retDate, isRound, adults, children, infants, cabinClass, flightSort, flightSearch]);
 
-  // Initialize price filter when results arrive
   const fr = flightSearch.response;
   if (fr && fr.availableFilters && !filtersInitialized) {
     setMaxPriceFilter(Math.ceil(fr.availableFilters.maxPrice));
     setFiltersInitialized(true);
   }
 
-  // Client-side filtering of flight offers
   const filteredOffers: FlightOffer[] = fr?.offers?.filter(o => {
-    const price = Number(o.totalPrice.amount);
-    const passStops = stopFilter.length === 0 || stopFilter.includes(o.stops);
+    const price     = Number(o.totalPrice.amount);
+    const passStops   = stopFilter.length === 0 || stopFilter.includes(o.stops);
     const passAirline = airlineFilter.length === 0 || airlineFilter.includes(o.airline);
-    const passPrice = price <= maxPriceFilter;
+    const passPrice   = price <= maxPriceFilter;
     return passStops && passAirline && passPrice;
   }) ?? [];
 
-  const toggleStop = (s: number) =>
-    setStopFilter(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s]);
+  const toggleStop    = (s: number) => setStopFilter(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s]);
+  const toggleAirline = (a: string) => setAirlineFilter(p => p.includes(a) ? p.filter(x => x !== a) : [...p, a]);
 
-  const toggleAirline = (a: string) =>
-    setAirlineFilter(p => p.includes(a) ? p.filter(x => x !== a) : [...p, a]);
-
-  // ── Hotel search submit ───────────────────────────────────────────────────
   const handleHotelSearch = useCallback(() => {
     if (!hotelDest || !checkIn || !checkOut) return;
-    hotelSearch.search({
-      destination: hotelDest, checkIn, checkOut,
-      adults: hotelAdults, children: 0, rooms: hotelRooms,
-      currency: 'USD', sortBy: hotelSort,
-    });
+    hotelSearch.search({ destination: hotelDest, checkIn, checkOut, adults: hotelAdults, children: 0, rooms: hotelRooms, currency: 'USD', sortBy: hotelSort });
   }, [hotelDest, checkIn, checkOut, hotelAdults, hotelRooms, hotelSort, hotelSearch]);
 
-  // ── Activity search submit ────────────────────────────────────────────────
   const handleActSearch = useCallback(() => {
     if (!actDest) return;
-    actSearch.search({
-      destination: actDest,
-      latitude: destSugg?.iataCode ? 0 : 0,
-      longitude: 0,
-      category: actCategory === 'ALL' ? undefined : actCategory,
-      participants: actParticipants,
-      currency: 'USD', sortBy: 'RATING',
-    });
-  }, [actDest, actCategory, actParticipants, actSearch, destSugg]);
+    actSearch.search({ destination: actDest, latitude: 0, longitude: 0, category: actCategory === 'ALL' ? undefined : actCategory, participants: actParticipants, currency: 'USD', sortBy: 'RATING' });
+  }, [actDest, actCategory, actParticipants, actSearch]);
 
-  const TAB_CONFIG = [
-    { key: 'flights' as Tab,    icon: '✈️', label: 'Flights' },
-    { key: 'hotels' as Tab,     icon: '🏨', label: 'Hotels' },
-    { key: 'activities' as Tab, icon: '🎟️', label: 'Activities' },
-  ];
+  /* ── Shared input style for light theme ───────────────────────── */
+  const fieldInput: React.CSSProperties = {
+    width: '100%',
+    background: 'var(--color-surface)',
+    border: '1.5px solid var(--color-border-strong)',
+    borderRadius: 'var(--radius-md)',
+    padding: '0.75rem 1rem',
+    color: 'var(--color-text)',
+    fontSize: '0.9375rem',
+    fontFamily: 'var(--font-sans)',
+    outline: 'none',
+    transition: 'border-color 0.15s',
+    colorScheme: 'light',
+  };
 
-  const hasFlightResults = !!fr;
-  const hasHotelResults  = !!hotelSearch.response;
-  const hasActResults    = !!actSearch.response;
+  const searchBtnStyle = (color: string): React.CSSProperties => ({
+    width: '100%',
+    padding: '0.875rem',
+    borderRadius: 'var(--radius-md)',
+    background: color,
+    color: '#fff',
+    border: 'none',
+    fontWeight: 700,
+    fontSize: '0.9375rem',
+    cursor: 'pointer',
+    transition: 'opacity 0.2s',
+    marginTop: '0.25rem',
+  });
 
   return (
-    <div className="min-h-screen" style={{ background: '#080c14' }}>
-      {/* Top Nav */}
-      <nav className="sticky top-0 z-30 border-b border-white/5 px-6 py-3"
-           style={{ background: 'rgba(8,12,20,0.92)', backdropFilter: 'blur(20px)' }}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400
-                            flex items-center justify-center text-sm font-bold text-white shadow-lg">
-              G
-            </div>
-            <span className="font-bold text-white text-lg">GlobeX <span className="text-blue-400">AI</span></span>
-          </Link>
-          <Link to="/" className="text-slate-400 hover:text-white text-sm transition-colors flex items-center gap-1">
-            ← Back to Destinations
-          </Link>
-        </div>
-      </nav>
+    <div style={{ minHeight: '100vh', background: 'var(--color-ivory)' }}>
+      <Navbar variant="solid" />
 
-      {/* Hero */}
-      <div className="relative py-14 px-6 text-center overflow-hidden">
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-blue-600/20 blur-3xl" />
-          <div className="absolute top-0 right-1/4 w-96 h-96 rounded-full bg-cyan-600/15 blur-3xl" />
-        </div>
-        <div className="relative">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/30
-                          bg-blue-500/10 text-blue-400 text-xs font-semibold mb-5">
-            ✈️ Real Flight Search · 🏨 Hotel Discovery · 🎟️ Activity Finder
+      {/* padding for fixed nav */}
+      <div style={{ paddingTop: 'var(--nav-height)' }}>
+
+        {/* ── Page Hero ─────────────────────────────────────────── */}
+        <section style={{ background: 'var(--color-navy)', padding: '3rem 0 2.5rem', color: '#fff' }}>
+          <div className="gx-container">
+            <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+              Travel Search
+            </p>
+            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 600, marginBottom: '0.5rem' }}>
+              Search Travel Worldwide
+            </h1>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1rem', maxWidth: '480px' }}>
+              Find flights, hotels, and activities for your next adventure.
+            </p>
+
+            {/* Tab switcher inside hero */}
+            <div style={{ display: 'flex', gap: '0.25rem', marginTop: '2rem', background: 'rgba(255,255,255,0.08)', borderRadius: 'var(--radius-lg)', padding: '0.25rem', width: 'fit-content' }}>
+              {TAB_CONFIG.map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.4rem',
+                    padding: '0.6rem 1.25rem',
+                    borderRadius: 'var(--radius-md)',
+                    border: 'none',
+                    background: activeTab === tab.key ? 'var(--color-teal)' : 'transparent',
+                    color: activeTab === tab.key ? '#fff' : 'rgba(255,255,255,0.6)',
+                    fontWeight: 600, fontSize: '0.875rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <span>{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
-            Search
-            <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent"> Travel </span>
-            Worldwide
-          </h1>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-            Find flights, hotels, and activities for your next adventure — all in one place.
-          </p>
-        </div>
-      </div>
+        </section>
 
-      {/* Tab Switcher */}
-      <div className="px-6 max-w-7xl mx-auto mb-6">
-        <div className="flex gap-1 p-1.5 rounded-2xl bg-white/4 border border-white/8 w-fit">
-          {TAB_CONFIG.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold
-                          transition-all duration-300
-                ${activeTab === tab.key
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
-                }`}
-            >
-              <span>{tab.icon}</span>
-              <span>{tab.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+        {/* ── Search Forms & Results ─────────────────────────────── */}
+        <div className="gx-container" style={{ padding: '2rem 1.5rem 4rem' }}>
 
-      <div className="px-6 pb-16 max-w-7xl mx-auto">
-
-        {/* ── FLIGHTS TAB ── */}
-        {activeTab === 'flights' && (
-          <div>
-            {/* Search Form */}
-            <div className="rounded-2xl border border-white/8 bg-white/4 backdrop-blur-sm p-5 mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <LocationAutocomplete
-                  id="flight-origin"
-                  label="From"
-                  placeholder="City or airport (e.g. DEL)"
-                  value={origin}
-                  onChange={(code, s) => { setOrigin(code); setOriginSugg(s); }}
-                />
-                <LocationAutocomplete
-                  id="flight-dest"
-                  label="To"
-                  placeholder="City or airport (e.g. LHR)"
-                  value={dest}
-                  onChange={(code, s) => { setDest(code); setDestSugg(s); }}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">
-                    Departure
-                  </label>
-                  <input
-                    type="date"
-                    value={depDate}
-                    min={today()}
-                    onChange={e => setDepDate(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white text-sm
-                               focus:outline-none focus:border-blue-500/60 transition-all"
-                  />
+          {/* ════════ FLIGHTS TAB ════════ */}
+          {activeTab === 'flights' && (
+            <div>
+              {/* Form */}
+              <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xl)', padding: '1.75rem', marginBottom: '2rem', boxShadow: 'var(--shadow-md)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                  <LocationAutocomplete id="flight-origin" label="From" placeholder="City or airport (e.g. DEL)"
+                    value={origin} onChange={(code, s) => { setOrigin(code); setOriginSugg(s); }} />
+                  <LocationAutocomplete id="flight-dest" label="To" placeholder="City or airport (e.g. LHR)"
+                    value={dest} onChange={(code, s) => { setDest(code); setDestSugg(s); }} />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Return</label>
-                    <button
-                      type="button"
-                      onClick={() => setIsRound(!isRound)}
-                      className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
-                        isRound ? 'bg-blue-500/20 border-blue-500/40 text-blue-400'
-                                : 'bg-white/5 border-white/10 text-slate-500 hover:text-white'
-                      }`}
-                    >
-                      {isRound ? 'Round' : '+ Return'}
-                    </button>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+                  <div>
+                    <label style={labelStyle}>Departure</label>
+                    <input type="date" value={depDate} min={today()} onChange={e => setDepDate(e.target.value)} style={fieldInput} />
                   </div>
-                  <input
-                    type="date"
-                    value={retDate}
-                    min={depDate}
-                    disabled={!isRound}
-                    onChange={e => setRetDate(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white text-sm
-                               disabled:opacity-40 focus:outline-none focus:border-blue-500/60 transition-all"
-                  />
-                </div>
-                <TravelerSelector
-                  adults={adults} children={children} infants={infants}
-                  onChange={(a, c, i) => { setAdults(a); setChildren(c); setInfants(i); }}
-                />
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">Cabin</label>
-                  <select
-                    value={cabinClass}
-                    onChange={e => setCabinClass(e.target.value as CabinClass)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white text-sm
-                               focus:outline-none focus:border-blue-500/60 transition-all cursor-pointer"
-                    style={{ colorScheme: 'dark' }}
-                  >
-                    <option value="ECONOMY">Economy</option>
-                    <option value="PREMIUM_ECONOMY">Premium Economy</option>
-                    <option value="BUSINESS">Business</option>
-                    <option value="FIRST">First</option>
-                  </select>
-                </div>
-              </div>
-
-              <button
-                onClick={handleFlightSearch}
-                disabled={!origin || !dest || !depDate || flightSearch.isLoading}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600
-                           hover:from-blue-500 hover:to-cyan-500 text-white font-bold text-base
-                           disabled:opacity-50 disabled:cursor-not-allowed
-                           transition-all duration-300 shadow-lg shadow-blue-500/20"
-              >
-                {flightSearch.isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Searching Duffel...
-                  </span>
-                ) : '✈️ Search Flights'}
-              </button>
-            </div>
-
-            {/* Results + Filters */}
-            {(hasFlightResults || flightSearch.isLoading || flightSearch.error) && (
-              <div className="flex gap-6">
-                {/* Filters Sidebar */}
-                {fr && fr.availableFilters && (
-                  <div className="hidden lg:block w-60 shrink-0">
-                    <div className="rounded-2xl border border-white/8 bg-white/3 p-4 sticky top-20">
-                      <h2 className="text-sm font-bold text-white mb-4">🔧 Filters</h2>
-                      <FlightFilters
-                        filters={fr.availableFilters}
-                        selectedStops={stopFilter}
-                        selectedAirlines={airlineFilter}
-                        maxPriceFilter={maxPriceFilter}
-                        onStopToggle={toggleStop}
-                        onAirlineToggle={toggleAirline}
-                        onMaxPriceChange={setMaxPriceFilter}
-                      />
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                      <label style={{ ...labelStyle, marginBottom: 0 }}>Return</label>
+                      <button type="button" onClick={() => setIsRound(!isRound)}
+                        style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '9999px', border: `1px solid ${isRound ? 'var(--color-teal)' : 'var(--color-border-strong)'}`, background: isRound ? 'rgba(60,147,137,0.08)' : 'transparent', color: isRound ? 'var(--color-teal)' : 'var(--color-muted)', cursor: 'pointer', fontWeight: 600 }}>
+                        {isRound ? 'Round' : '+ Return'}
+                      </button>
                     </div>
+                    <input type="date" value={retDate} min={depDate} disabled={!isRound} onChange={e => setRetDate(e.target.value)} style={{ ...fieldInput, opacity: isRound ? 1 : 0.4 }} />
                   </div>
-                )}
+                  <TravelerSelector adults={adults} children={children} infants={infants}
+                    onChange={(a, c, i) => { setAdults(a); setChildren(c); setInfants(i); }} />
+                  <div>
+                    <label style={labelStyle}>Cabin</label>
+                    <select value={cabinClass} onChange={e => setCabinClass(e.target.value as CabinClass)} style={{ ...fieldInput, cursor: 'pointer', colorScheme: 'light' }}>
+                      <option value="ECONOMY">Economy</option>
+                      <option value="PREMIUM_ECONOMY">Premium Economy</option>
+                      <option value="BUSINESS">Business</option>
+                      <option value="FIRST">First</option>
+                    </select>
+                  </div>
+                </div>
 
-                {/* Results */}
-                <div className="flex-1 min-w-0">
-                  <FlightResultsList
-                    response={fr}
-                    isLoading={flightSearch.isLoading}
-                    error={flightSearch.error}
-                    sortBy={flightSort}
-                    onSortChange={setFlightSort}
-                    filteredOffers={fr ? filteredOffers : undefined}
-                  />
-                </div>
+                <button onClick={handleFlightSearch} disabled={!origin || !dest || !depDate || flightSearch.isLoading}
+                  style={{ ...searchBtnStyle('var(--color-ocean)'), opacity: (!origin || !dest || !depDate || flightSearch.isLoading) ? 0.5 : 1, cursor: (!origin || !dest || !depDate || flightSearch.isLoading) ? 'not-allowed' : 'pointer' }}>
+                  {flightSearch.isLoading
+                    ? <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}><span className="spinner" style={{ width: '1rem', height: '1rem', borderWidth: '2px', borderColor: 'rgba(255,255,255,0.4)', borderTopColor: '#fff' }} /> Searching flights…</span>
+                    : '✈️  Search Flights'}
+                </button>
               </div>
-            )}
 
-            {!hasFlightResults && !flightSearch.isLoading && !flightSearch.error && (
-              <FlightResultsList
-                response={null} isLoading={false} error={null}
-                sortBy={flightSort} onSortChange={setFlightSort}
-              />
-            )}
-          </div>
-        )}
+              {/* Results + Filters */}
+              {(!!fr || flightSearch.isLoading || flightSearch.error) && (
+                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+                  {fr?.availableFilters && (
+                    <div style={{ width: 240, flexShrink: 0, display: 'none' }} className="lg-block">
+                      <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '1.25rem', position: 'sticky', top: 88 }}>
+                        <h3 style={{ fontWeight: 700, color: 'var(--color-navy)', fontSize: '0.9rem', marginBottom: '1rem' }}>Filters</h3>
+                        <FlightFilters filters={fr.availableFilters} selectedStops={stopFilter} selectedAirlines={airlineFilter}
+                          maxPriceFilter={maxPriceFilter} onStopToggle={toggleStop} onAirlineToggle={toggleAirline} onMaxPriceChange={setMaxPriceFilter} />
+                      </div>
+                    </div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <FlightResultsList response={fr} isLoading={flightSearch.isLoading} error={flightSearch.error}
+                      sortBy={flightSort} onSortChange={setFlightSort} filteredOffers={fr ? filteredOffers : undefined} />
+                  </div>
+                </div>
+              )}
 
-        {/* ── HOTELS TAB ── */}
-        {activeTab === 'hotels' && (
-          <div>
-            <div className="rounded-2xl border border-white/8 bg-white/4 backdrop-blur-sm p-5 mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">Destination</label>
-                  <input
-                    type="text"
-                    value={hotelDest}
-                    onChange={e => setHotelDest(e.target.value)}
-                    placeholder="City, e.g. London, Paris, Delhi..."
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white
-                               placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500/60 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">Check-in</label>
-                  <input
-                    type="date" value={checkIn} min={today()}
-                    onChange={e => setCheckIn(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white text-sm
-                               focus:outline-none focus:border-blue-500/60 transition-all"
-                    style={{ colorScheme: 'dark' }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">Check-out</label>
-                  <input
-                    type="date" value={checkOut} min={checkIn}
-                    onChange={e => setCheckOut(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white text-sm
-                               focus:outline-none focus:border-blue-500/60 transition-all"
-                    style={{ colorScheme: 'dark' }}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">Adults</label>
-                  <input
-                    type="number" value={hotelAdults} min={1} max={20}
-                    onChange={e => setHotelAdults(Number(e.target.value))}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm
-                               focus:outline-none focus:border-blue-500/60 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">Rooms</label>
-                  <input
-                    type="number" value={hotelRooms} min={1} max={9}
-                    onChange={e => setHotelRooms(Number(e.target.value))}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm
-                               focus:outline-none focus:border-blue-500/60 transition-all"
-                  />
-                </div>
-              </div>
-              <button
-                onClick={handleHotelSearch}
-                disabled={!hotelDest || !checkIn || !checkOut || hotelSearch.isLoading}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-violet-600
-                           hover:from-blue-500 hover:to-violet-500 text-white font-bold text-base
-                           disabled:opacity-50 disabled:cursor-not-allowed
-                           transition-all duration-300 shadow-lg shadow-blue-500/20"
-              >
-                {hotelSearch.isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Searching hotels...
-                  </span>
-                ) : '🏨 Search Hotels'}
-              </button>
+              {!fr && !flightSearch.isLoading && !flightSearch.error && (
+                <FlightResultsList response={null} isLoading={false} error={null} sortBy={flightSort} onSortChange={setFlightSort} />
+              )}
             </div>
+          )}
 
-            <HotelResultsList
-              response={hotelSearch.response}
-              isLoading={hotelSearch.isLoading}
-              error={hotelSearch.error}
-              sortBy={hotelSort}
-              onSortChange={setHotelSort}
-            />
-          </div>
-        )}
-
-        {/* ── ACTIVITIES TAB ── */}
-        {activeTab === 'activities' && (
-          <div>
-            <div className="rounded-2xl border border-white/8 bg-white/4 backdrop-blur-sm p-5 mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">Destination</label>
-                  <input
-                    type="text"
-                    value={actDest}
-                    onChange={e => setActDest(e.target.value)}
-                    placeholder="City, e.g. London, Tokyo, Dubai, Delhi..."
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white
-                               placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500/60 transition-all"
-                  />
+          {/* ════════ HOTELS TAB ════════ */}
+          {activeTab === 'hotels' && (
+            <div>
+              <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xl)', padding: '1.75rem', marginBottom: '2rem', boxShadow: 'var(--shadow-md)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <label style={labelStyle}>Destination</label>
+                    <input type="text" value={hotelDest} onChange={e => setHotelDest(e.target.value)}
+                      placeholder="City, e.g. London, Paris…" style={fieldInput} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Check-in</label>
+                    <input type="date" value={checkIn} min={today()} onChange={e => setCheckIn(e.target.value)} style={fieldInput} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Check-out</label>
+                    <input type="date" value={checkOut} min={checkIn} onChange={e => setCheckOut(e.target.value)} style={fieldInput} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Adults</label>
+                    <input type="number" value={hotelAdults} min={1} max={20} onChange={e => setHotelAdults(Number(e.target.value))} style={fieldInput} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Rooms</label>
+                    <input type="number" value={hotelRooms} min={1} max={9} onChange={e => setHotelRooms(Number(e.target.value))} style={fieldInput} />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">Participants</label>
-                  <input
-                    type="number" value={actParticipants} min={1} max={50}
-                    onChange={e => setActParticipants(Number(e.target.value))}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm
-                               focus:outline-none focus:border-blue-500/60 transition-all"
-                  />
-                </div>
+                <button onClick={handleHotelSearch} disabled={!hotelDest || !checkIn || !checkOut || hotelSearch.isLoading}
+                  style={{ ...searchBtnStyle('var(--color-ocean)'), opacity: (!hotelDest || !checkIn || !checkOut || hotelSearch.isLoading) ? 0.5 : 1, cursor: (!hotelDest || !checkIn || !checkOut || hotelSearch.isLoading) ? 'not-allowed' : 'pointer' }}>
+                  {hotelSearch.isLoading
+                    ? <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}><span className="spinner" style={{ width: '1rem', height: '1rem', borderWidth: '2px', borderColor: 'rgba(255,255,255,0.4)', borderTopColor: '#fff' }} /> Searching hotels…</span>
+                    : '🏨  Search Hotels'}
+                </button>
               </div>
-              <button
-                onClick={handleActSearch}
-                disabled={!actDest || actSearch.isLoading}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-600
-                           hover:from-blue-500 hover:to-emerald-500 text-white font-bold text-base
-                           disabled:opacity-50 disabled:cursor-not-allowed
-                           transition-all duration-300 shadow-lg shadow-blue-500/20"
-              >
-                {actSearch.isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Searching activities...
-                  </span>
-                ) : '🎟️ Search Activities'}
-              </button>
+              <HotelResultsList response={hotelSearch.response} isLoading={hotelSearch.isLoading} error={hotelSearch.error} sortBy={hotelSort} onSortChange={setHotelSort} />
             </div>
+          )}
 
-            <ActivityResultsList
-              response={actSearch.response}
-              isLoading={actSearch.isLoading}
-              error={actSearch.error}
-              activeCategory={actCategory}
-              onCategoryChange={setActCategory}
-            />
-          </div>
-        )}
+          {/* ════════ ACTIVITIES TAB ════════ */}
+          {activeTab === 'activities' && (
+            <div>
+              <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xl)', padding: '1.75rem', marginBottom: '2rem', boxShadow: 'var(--shadow-md)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                  <div>
+                    <label style={labelStyle}>Destination</label>
+                    <input type="text" value={actDest} onChange={e => setActDest(e.target.value)}
+                      placeholder="City, e.g. London, Tokyo…" style={fieldInput} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Participants</label>
+                    <input type="number" value={actParticipants} min={1} max={50} onChange={e => setActParticipants(Number(e.target.value))} style={fieldInput} />
+                  </div>
+                </div>
+                <button onClick={handleActSearch} disabled={!actDest || actSearch.isLoading}
+                  style={{ ...searchBtnStyle('var(--color-teal)'), opacity: (!actDest || actSearch.isLoading) ? 0.5 : 1, cursor: (!actDest || actSearch.isLoading) ? 'not-allowed' : 'pointer' }}>
+                  {actSearch.isLoading
+                    ? <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}><span className="spinner" style={{ width: '1rem', height: '1rem', borderWidth: '2px', borderColor: 'rgba(255,255,255,0.4)', borderTopColor: '#fff' }} /> Searching activities…</span>
+                    : '🎟️  Search Activities'}
+                </button>
+              </div>
+              <ActivityResultsList response={actSearch.response} isLoading={actSearch.isLoading} error={actSearch.error} activeCategory={actCategory} onCategoryChange={setActCategory} />
+            </div>
+          )}
+        </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

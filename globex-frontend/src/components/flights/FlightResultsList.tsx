@@ -1,6 +1,6 @@
 import DataFreshnessNotice from '../search/DataFreshnessNotice';
 import FlightCard from './FlightCard';
-import type { FlightSearchResponse } from '../../types/phase5.types';
+import type { FlightOffer, FlightSearchResponse } from '../../types/phase5.types';
 
 const SORT_OPTIONS = [
   { key: 'CHEAPEST', label: '💰 Cheapest' },
@@ -38,7 +38,7 @@ interface Props {
   error: string | null;
   sortBy: string;
   onSortChange: (sort: string) => void;
-  filteredOffers?: typeof response extends null ? never : FlightSearchResponse['offers'];
+  filteredOffers?: FlightSearchResponse['offers'];
 }
 
 export default function FlightResultsList({
@@ -115,7 +115,7 @@ export default function FlightResultsList({
 
       {/* Results */}
       <div className="space-y-3">
-        {offers.map((offer, i) => (
+        {offers.map((offer: FlightOffer, i: number) => (
           <FlightCard key={offer.offerId} offer={offer} index={i} />
         ))}
       </div>

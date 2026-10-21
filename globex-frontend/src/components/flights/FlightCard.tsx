@@ -32,86 +32,92 @@ export default function FlightCard({ offer, index }: Props) {
 
   const stopsLabel = (segments: typeof offer.outboundSegments) => {
     const stops = segments.length - 1;
-    if (stops === 0) return <span className="text-emerald-400 text-xs font-semibold">Direct</span>;
-    return <span className="text-amber-400 text-xs font-semibold">{stops} stop{stops > 1 ? 's' : ''}</span>;
+    if (stops === 0) return <span style={{ color: '#16A34A', fontSize: '0.75rem', fontWeight: 600 }}>Direct</span>;
+    return <span style={{ color: '#D97706', fontSize: '0.75rem', fontWeight: 600 }}>{stops} stop{stops > 1 ? 's' : ''}</span>;
   };
 
   return (
     <div
-      className="group relative rounded-2xl border border-white/8 bg-white/4 hover:bg-white/7
-                 hover:border-blue-500/30 transition-all duration-300 overflow-hidden"
-      style={{ animationDelay: `${index * 60}ms` }}
+      style={{
+        position: 'relative',
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        borderRadius: 'var(--radius-xl)',
+        overflow: 'hidden',
+        transition: 'box-shadow 0.2s, border-color 0.2s',
+        animationDelay: `${index * 60}ms`,
+      }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-md)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-teal)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'; }}
     >
-      {/* Test data ribbon */}
+      {/* Sandbox ribbon */}
       {offer.isTestData && (
-        <div className="absolute top-0 right-0 bg-amber-500/20 text-amber-400 text-[10px] font-bold
-                        px-2 py-0.5 rounded-bl-lg border-l border-b border-amber-500/30">
+        <div style={{ position: 'absolute', top: 0, right: 0, background: '#FEF3C7', color: '#92400E', fontSize: '0.625rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderBottomLeftRadius: 'var(--radius-md)', border: '1px solid #FDE68A' }}>
           🧪 Sandbox
         </div>
       )}
 
-      <div className="p-5">
+      <div style={{ padding: '1.25rem' }}>
         {/* Header: Airline + Price */}
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div className="flex items-center gap-3">
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             {offer.airlineLogoUrl ? (
               <img src={offer.airlineLogoUrl} alt={offer.airline}
-                   className="w-9 h-9 rounded-lg object-contain bg-white/10 p-1" />
+                   style={{ width: '2.25rem', height: '2.25rem', borderRadius: 'var(--radius-md)', objectFit: 'contain', background: 'var(--color-sand)', padding: '0.2rem' }} />
             ) : (
-              <div className="w-9 h-9 rounded-lg bg-blue-500/20 border border-blue-500/30
-                              flex items-center justify-center text-blue-400 font-bold text-xs">
+              <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: 'var(--radius-md)', background: 'var(--color-sand)', border: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-ocean)', fontWeight: 700, fontSize: '0.75rem' }}>
                 {offer.airlineCode || '✈'}
               </div>
             )}
             <div>
-              <div className="text-white font-semibold text-sm">{offer.airline}</div>
-              <div className="text-slate-500 text-xs">{offer.cabinClassDisplay}</div>
+              <div style={{ color: 'var(--color-navy)', fontWeight: 600, fontSize: '0.875rem' }}>{offer.airline}</div>
+              <div style={{ color: 'var(--color-slate)', fontSize: '0.75rem' }}>{offer.cabinClassDisplay}</div>
             </div>
           </div>
 
-          <div className="text-right">
-            <div className="text-2xl font-bold text-white">
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-navy)' }}>
               {offer.totalPrice.currency} {Number(offer.totalPrice.amount).toLocaleString()}
             </div>
-            <div className="text-slate-500 text-xs">per person</div>
+            <div style={{ color: 'var(--color-slate)', fontSize: '0.75rem' }}>per person</div>
             {offer.refundable && (
-              <div className="text-emerald-400 text-xs font-medium mt-0.5">✓ Refundable</div>
+              <div style={{ color: '#16A34A', fontSize: '0.75rem', fontWeight: 500, marginTop: '0.15rem' }}>✓ Refundable</div>
             )}
           </div>
         </div>
 
         {/* Outbound flight timeline */}
-        <div className="mb-3">
-          <div className="flex items-center gap-3">
-            <div className="text-center shrink-0 w-16">
-              <div className="text-white font-bold text-lg leading-none">
+        <div style={{ marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ textAlign: 'center', flexShrink: 0, width: '4rem' }}>
+              <div style={{ color: 'var(--color-navy)', fontWeight: 700, fontSize: '1.125rem', lineHeight: 1 }}>
                 {outbound ? formatTime(outbound.departureTime) : '--'}
               </div>
-              <div className="text-slate-400 text-xs font-mono mt-0.5">
+              <div style={{ color: 'var(--color-slate)', fontSize: '0.75rem', fontFamily: 'monospace', marginTop: '0.15rem' }}>
                 {outbound?.departureAirportCode || '--'}
               </div>
             </div>
 
-            <div className="flex-1 flex flex-col items-center gap-1">
-              <div className="text-slate-500 text-xs">{formatDuration(offer.totalDurationMinutes)}</div>
-              <div className="w-full flex items-center gap-1">
-                <div className="flex-1 h-px bg-gradient-to-r from-slate-600 via-blue-500/40 to-slate-600" />
-                <div className="text-slate-600 text-xs">✈</div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+              <div style={{ color: 'var(--color-slate)', fontSize: '0.75rem' }}>{formatDuration(offer.totalDurationMinutes)}</div>
+              <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, var(--color-border), var(--color-ocean), var(--color-border))' }} />
+                <div style={{ color: 'var(--color-slate)', fontSize: '0.75rem' }}>✈</div>
               </div>
               <div>{stopsLabel(offer.outboundSegments)}</div>
             </div>
 
-            <div className="text-center shrink-0 w-16">
-              <div className="text-white font-bold text-lg leading-none">
+            <div style={{ textAlign: 'center', flexShrink: 0, width: '4rem' }}>
+              <div style={{ color: 'var(--color-navy)', fontWeight: 700, fontSize: '1.125rem', lineHeight: 1 }}>
                 {lastOutbound ? formatTime(lastOutbound.arrivalTime) : '--'}
               </div>
-              <div className="text-slate-400 text-xs font-mono mt-0.5">
+              <div style={{ color: 'var(--color-slate)', fontSize: '0.75rem', fontFamily: 'monospace', marginTop: '0.15rem' }}>
                 {lastOutbound?.arrivalAirportCode || '--'}
               </div>
             </div>
           </div>
           {outbound && (
-            <div className="text-slate-600 text-xs text-center mt-1">
+            <div style={{ color: 'var(--color-slate)', fontSize: '0.75rem', textAlign: 'center', marginTop: '0.25rem' }}>
               {outbound.departureCityName} → {lastOutbound?.arrivalCityName}
               {' · '}{formatDate(outbound.departureTime)}
             </div>
@@ -120,43 +126,42 @@ export default function FlightCard({ offer, index }: Props) {
 
         {/* Return flight (if round trip) */}
         {hasReturn && ret && lastRet && (
-          <div className="pt-3 border-t border-white/5">
-            <div className="flex items-center gap-3">
-              <div className="text-center shrink-0 w-16">
-                <div className="text-white font-semibold text-base leading-none">
+          <div style={{ paddingTop: '0.75rem', borderTop: '1px solid var(--color-border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ textAlign: 'center', flexShrink: 0, width: '4rem' }}>
+                <div style={{ color: 'var(--color-navy)', fontWeight: 600, fontSize: '1rem', lineHeight: 1 }}>
                   {formatTime(ret.departureTime)}
                 </div>
-                <div className="text-slate-400 text-xs font-mono mt-0.5">{ret.departureAirportCode}</div>
+                <div style={{ color: 'var(--color-slate)', fontSize: '0.75rem', fontFamily: 'monospace', marginTop: '0.15rem' }}>{ret.departureAirportCode}</div>
               </div>
 
-              <div className="flex-1 flex flex-col items-center gap-1">
-                <div className="text-slate-500 text-xs">Return</div>
-                <div className="w-full h-px bg-gradient-to-r from-slate-600 via-cyan-500/40 to-slate-600" />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+                <div style={{ color: 'var(--color-slate)', fontSize: '0.75rem' }}>Return</div>
+                <div style={{ width: '100%', height: '1px', background: 'linear-gradient(to right, var(--color-border), var(--color-teal), var(--color-border))' }} />
                 <div>{stopsLabel(offer.returnSegments!)}</div>
               </div>
 
-              <div className="text-center shrink-0 w-16">
-                <div className="text-white font-semibold text-base leading-none">
+              <div style={{ textAlign: 'center', flexShrink: 0, width: '4rem' }}>
+                <div style={{ color: 'var(--color-navy)', fontWeight: 600, fontSize: '1rem', lineHeight: 1 }}>
                   {formatTime(lastRet.arrivalTime)}
                 </div>
-                <div className="text-slate-400 text-xs font-mono mt-0.5">{lastRet.arrivalAirportCode}</div>
+                <div style={{ color: 'var(--color-slate)', fontSize: '0.75rem', fontFamily: 'monospace', marginTop: '0.15rem' }}>{lastRet.arrivalAirportCode}</div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Footer: Baggage + Conditions */}
-        <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-4 text-xs text-slate-500">
+        {/* Footer: Baggage + Book */}
+        <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.75rem', color: 'var(--color-slate)' }}>
             <span>🧳 {offer.baggageAllowance}</span>
-            {offer.changeable && <span className="text-slate-500">📅 Date change</span>}
+            {offer.changeable && <span>📅 Date change</span>}
           </div>
           <a
             href="https://duffel.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold
-                       rounded-lg transition-colors duration-200 shrink-0"
+            style={{ padding: '0.375rem 1rem', background: 'var(--color-navy)', color: '#fff', fontSize: '0.75rem', fontWeight: 600, borderRadius: 'var(--radius-md)', textDecoration: 'none', transition: 'background 0.2s', flexShrink: 0 }}
           >
             View Deal →
           </a>

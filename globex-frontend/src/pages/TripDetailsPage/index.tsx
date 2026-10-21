@@ -10,12 +10,47 @@ import { BudgetOverview } from '../../features/trips/components/BudgetOverview';
 import { ExpenseList } from '../../features/trips/components/ExpenseList';
 import { DeleteConfirmModal } from '../../features/trips/components/DeleteConfirmModal';
 import { deleteTrip, removeFlight, removeHotel, removeActivity, updateTripStatus } from '../../features/trips/api/tripApi';
+import Navbar from '../../components/layout/Navbar';
 
 type Tab = 'overview' | 'itinerary' | 'budget' | 'ai';
 
 function fmt(d: string) {
-  return new Date(d).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+  return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'overview',   label: 'Overview' },
+  { key: 'itinerary',  label: 'Itinerary' },
+  { key: 'budget',     label: 'Budget' },
+  { key: 'ai',         label: '🤖 AI (Phase 7)' },
+];
+
+/** Reusable section card */
+const SectionCard = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '1.25rem 1.5rem', marginBottom: '1.25rem' }}>
+    <h3 style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem' }}>{title}</h3>
+    {children}
+  </div>
+);
+
+/** Empty booking slot */
+const EmptySlot = ({ label, to }: { label: string; to: string }) => (
+  <div style={{ border: '1.5px dashed var(--color-border)', borderRadius: 'var(--radius-md)', padding: '1rem', textAlign: 'center' }}>
+    <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>
+      Search and add {label} from the{' '}
+      <Link to={to} style={{ color: 'var(--color-ocean)', fontWeight: 500 }}>Search page</Link>
+    </p>
+  </div>
+);
+
+/** Booking row */
+const BookingRow = ({ left, right, onRemove }: { left: React.ReactNode; right?: React.ReactNode; onRemove: () => void }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.875rem 1rem', background: 'var(--color-ivory)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', marginBottom: '0.5rem' }}>
+    <div style={{ flex: 1, minWidth: 0 }}>{left}</div>
+    {right}
+    <button onClick={onRemove} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', padding: '0.25rem', fontSize: '0.9rem', flexShrink: 0 }} aria-label="Remove">✕</button>
+  </div>
+);
 
 export default function TripDetailsPage() {
   const { tripId } = useParams<{ tripId: string }>();
@@ -25,218 +60,226 @@ export default function TripDetailsPage() {
   const [statusUpdating, setStatusUpdating] = useState(false);
 
   const { trip, flights, hotels, activities, travelers, loading, error, refresh } = useTripDetail(tripId!);
-  const { itinerary, addItem, removeItem, moveItem, deleteDay, refresh: refreshItinerary } = useItinerary(tripId!);
+  const { itinerary, addItem, removeItem, moveItem, removeDay, refresh: refreshItinerary } = useItinerary(tripId!);
   const { budget, expenses, addExpense, editExpense, removeExpense } = useBudget(tripId!);
 
   if (loading) return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-      <p className="text-slate-400 animate-pulse">Loading trip…</p>
+    <div style={{ minHeight: '100vh', background: 'var(--color-ivory)' }}>
+      <Navbar variant="solid" />
+      <div style={{ paddingTop: 'var(--nav-height)', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <span className="spinner" style={{ width: '2rem', height: '2rem', borderWidth: '3px' }} />
+          <p style={{ color: 'var(--color-muted)', marginTop: '1rem', fontSize: '0.9rem' }}>Loading trip…</p>
+        </div>
+      </div>
     </div>
   );
+
   if (error || !trip) return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-      <div className="text-center"><p className="text-red-400 mb-4">{error ?? 'Trip not found'}</p><Link to="/trips" className="text-blue-400 hover:underline text-sm">← My Trips</Link></div>
+    <div style={{ minHeight: '100vh', background: 'var(--color-ivory)' }}>
+      <Navbar variant="solid" />
+      <div style={{ paddingTop: 'var(--nav-height)', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ color: 'var(--color-danger)', marginBottom: '1rem' }}>{error ?? 'Trip not found'}</p>
+          <Link to="/trips" className="btn btn-outline">← My Trips</Link>
+        </div>
+      </div>
     </div>
   );
 
-  const handleArchive = async () => {
-    await deleteTrip(tripId!, 'archive'); nav('/trips');
-  };
-
+  const handleArchive = async () => { await deleteTrip(tripId!, 'archive'); nav('/trips'); };
   const handleStatusChange = async (newStatus: string) => {
     setStatusUpdating(true);
     try { await updateTripStatus(tripId!, newStatus); await refresh(); }
     catch { /* ignore */ }
     finally { setStatusUpdating(false); }
   };
-
-  const nextStatus: Record<string, string> = { PLANNING:'CONFIRMED', CONFIRMED:'IN_PROGRESS', IN_PROGRESS:'COMPLETED' };
-
-  const TABS: { key: Tab; label: string }[] = [
-    { key:'overview', label:'Overview' }, { key:'itinerary', label:'Itinerary' },
-    { key:'budget', label:'Budget' }, { key:'ai', label:'🤖 AI (Phase 7)' },
-  ];
+  const nextStatus: Record<string, string> = { PLANNING: 'CONFIRMED', CONFIRMED: 'IN_PROGRESS', IN_PROGRESS: 'COMPLETED' };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
-      {/* Header */}
-      <div className="border-b border-slate-700/50 bg-slate-900/80 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-4">
-          <Link to="/trips" className="text-slate-400 hover:text-white text-sm shrink-0">← Trips</Link>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-white font-semibold truncate">{trip.title}</h1>
-            <p className="text-slate-400 text-xs">{fmt(trip.startDate)} — {fmt(trip.endDate)} · {trip.durationDays} days</p>
-          </div>
-          <TripStatusBadge status={trip.status} />
-          <Link to={`/trips/${tripId}/edit`} className="px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg">Edit</Link>
-          <button onClick={() => setShowDelete(true)} className="px-3 py-1.5 text-xs bg-slate-700 hover:bg-red-800/40 text-slate-400 hover:text-red-400 rounded-lg">Archive</button>
-        </div>
-        {/* Tabs */}
-        <div className="max-w-5xl mx-auto px-4 flex gap-1">
-          {TABS.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)}
-              className={`px-4 py-2 text-xs font-medium border-b-2 transition-colors ${tab === t.key ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-300'}`}>
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
+    <div style={{ minHeight: '100vh', background: 'var(--color-ivory)' }}>
+      <Navbar variant="solid" />
+      <div style={{ paddingTop: 'var(--nav-height)' }}>
 
-      <div className="max-w-5xl mx-auto px-4 py-6">
-        {/* OVERVIEW TAB */}
-        {tab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left — trip info + status + travelers */}
-            <div className="lg:col-span-1 space-y-4">
-              {trip.coverImageUrl && (
-                <div className="h-40 rounded-xl overflow-hidden">
-                  <img src={trip.coverImageUrl} alt={trip.title} className="w-full h-full object-cover" />
+        {/* ── Trip Header ────────────────────────────────────────── */}
+        <div style={{ background: 'linear-gradient(135deg, var(--color-navy) 0%, var(--color-ocean) 100%)', color: '#fff', padding: '2rem 0 0' }}>
+          <div className="gx-container">
+            {/* Breadcrumb */}
+            <nav style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '0.8125rem', color: 'rgba(255,255,255,0.5)' }}>
+              <Link to="/trips" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>My Trips</Link>
+              <span>›</span>
+              <span style={{ color: 'rgba(255,255,255,0.9)' }}>{trip.title}</span>
+            </nav>
+
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
+                  <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 600 }}>{trip.title}</h1>
+                  <TripStatusBadge status={trip.status} />
                 </div>
-              )}
-              <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 space-y-2 text-sm">
-                {trip.destination && <p className="text-slate-300">📍 {trip.destination.name}</p>}
-                <p className="text-slate-400">📅 {fmt(trip.startDate)} – {fmt(trip.endDate)}</p>
-                <p className="text-slate-400">💰 {trip.currency}{trip.budgetLimit ? ` · ${trip.budgetLimit.toLocaleString()} budget` : ''}</p>
-                {trip.description && <p className="text-slate-400 text-xs pt-1 border-t border-slate-700/40">{trip.description}</p>}
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>
+                  {fmt(trip.startDate)} — {fmt(trip.endDate)} · {trip.durationDays} days
+                  {trip.destination && <span> · 📍 {trip.destination.name}</span>}
+                </p>
               </div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <Link to={`/trips/${tripId}/edit`} className="btn btn-outline btn-sm" style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#fff' }}>Edit</Link>
+                <button onClick={() => setShowDelete(true)} className="btn btn-sm" style={{ background: 'rgba(192,57,43,0.15)', border: '1px solid rgba(192,57,43,0.3)', color: '#fca5a5', cursor: 'pointer' }}>Archive</button>
+              </div>
+            </div>
 
-              {/* Status advance button */}
-              {nextStatus[trip.status] && (
-                <button onClick={() => handleStatusChange(nextStatus[trip.status])} disabled={statusUpdating}
-                  className="w-full py-2 text-sm bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-600/30 rounded-xl transition-colors disabled:opacity-50">
-                  {statusUpdating ? '…' : `→ Mark as ${nextStatus[trip.status].replace('_',' ')}`}
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: '0' }}>
+              {TABS.map(t => (
+                <button key={t.key} onClick={() => setTab(t.key)}
+                  style={{
+                    padding: '0.75rem 1.25rem',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: tab === t.key ? '2.5px solid var(--color-teal-light)' : '2.5px solid transparent',
+                    color: tab === t.key ? 'var(--color-teal-light)' : 'rgba(255,255,255,0.5)',
+                    cursor: 'pointer',
+                    transition: 'color 0.15s, border-color 0.15s',
+                    whiteSpace: 'nowrap',
+                  }}>
+                  {t.label}
                 </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Tab Content ─────────────────────────────────────────── */}
+        <div className="gx-container" style={{ padding: '2rem 1.5rem 4rem' }}>
+
+          {/* OVERVIEW TAB */}
+          {tab === 'overview' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem' }}>
+              {/* Left column */}
+              <div>
+                {trip.coverImageUrl && (
+                  <div style={{ height: 160, borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: '1rem' }}>
+                    <img src={trip.coverImageUrl} alt={trip.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                )}
+
+                <SectionCard title="Trip Details">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem' }}>
+                    {trip.destination && <p style={{ color: 'var(--color-navy)' }}>📍 {trip.destination.name}</p>}
+                    <p style={{ color: 'var(--color-slate)' }}>📅 {fmt(trip.startDate)} – {fmt(trip.endDate)}</p>
+                    <p style={{ color: 'var(--color-slate)' }}>💰 {trip.currency}{trip.budgetLimit ? ` · ${trip.budgetLimit.toLocaleString()} budget` : ''}</p>
+                    {trip.description && <p style={{ color: 'var(--color-muted)', fontSize: '0.8125rem', paddingTop: '0.5rem', borderTop: '1px solid var(--color-border)' }}>{trip.description}</p>}
+                  </div>
+                </SectionCard>
+
+                {nextStatus[trip.status] && (
+                  <button onClick={() => handleStatusChange(nextStatus[trip.status])} disabled={statusUpdating}
+                    style={{ width: '100%', padding: '0.75rem', fontSize: '0.875rem', background: 'rgba(45,143,94,0.06)', border: '1px solid rgba(45,143,94,0.2)', color: 'var(--color-success)', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 600, marginBottom: '1rem', opacity: statusUpdating ? 0.5 : 1 }}>
+                    {statusUpdating ? '…' : `→ Mark as ${nextStatus[trip.status].replace('_', ' ')}`}
+                  </button>
+                )}
+
+                <TravelerManager tripId={tripId!} travelers={travelers} onRefresh={refresh} />
+              </div>
+
+              {/* Right column — bookings */}
+              <div>
+                <SectionCard title={`✈️ Flights (${flights.length})`}>
+                  {flights.length === 0 ? <EmptySlot label="flights" to="/search" /> : flights.map(f => (
+                    <BookingRow key={f.id}
+                      left={<>
+                        <p style={{ fontWeight: 600, color: 'var(--color-navy)', fontSize: '0.9rem' }}>{f.origin} → {f.destination}</p>
+                        <p style={{ color: 'var(--color-muted)', fontSize: '0.8rem' }}>{f.airline ?? f.provider} · {f.cabinClass ?? ''}</p>
+                        {f.statusNote && <p style={{ color: 'var(--color-warning)', fontSize: '0.75rem', fontStyle: 'italic' }}>{f.statusNote}</p>}
+                      </>}
+                      right={<span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-ocean)', flexShrink: 0 }}>{f.currency} {f.priceAmount.toLocaleString()}</span>}
+                      onRemove={() => removeFlight(tripId!, f.id).then(refresh)}
+                    />
+                  ))}
+                </SectionCard>
+
+                <SectionCard title={`🏨 Hotels (${hotels.length})`}>
+                  {hotels.length === 0 ? <EmptySlot label="hotels" to="/search" /> : hotels.map(h => (
+                    <BookingRow key={h.id}
+                      left={<>
+                        <p style={{ fontWeight: 600, color: 'var(--color-navy)', fontSize: '0.9rem' }}>{h.hotelName}</p>
+                        <p style={{ color: 'var(--color-muted)', fontSize: '0.8rem' }}>{h.checkIn} → {h.checkOut} · {h.roomType ?? ''}</p>
+                        {h.statusNote && <p style={{ color: 'var(--color-warning)', fontSize: '0.75rem', fontStyle: 'italic' }}>{h.statusNote}</p>}
+                      </>}
+                      right={<span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-ocean)', flexShrink: 0 }}>{h.currency} {h.priceAmount.toLocaleString()}</span>}
+                      onRemove={() => removeHotel(tripId!, h.id).then(refresh)}
+                    />
+                  ))}
+                </SectionCard>
+
+                <SectionCard title={`🎭 Activities (${activities.length})`}>
+                  {activities.length === 0 ? <EmptySlot label="activities" to="/search" /> : activities.map(a => (
+                    <BookingRow key={a.id}
+                      left={<>
+                        <p style={{ fontWeight: 600, color: 'var(--color-navy)', fontSize: '0.9rem' }}>{a.activityName}</p>
+                        <p style={{ color: 'var(--color-muted)', fontSize: '0.8rem' }}>{a.activityDate ?? ''}{a.category ? ` · ${a.category}` : ''}</p>
+                      </>}
+                      right={a.priceAmount > 0 ? <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-ocean)', flexShrink: 0 }}>{a.currency} {a.priceAmount.toLocaleString()}</span> : undefined}
+                      onRemove={() => removeActivity(tripId!, a.id).then(refresh)}
+                    />
+                  ))}
+                </SectionCard>
+              </div>
+            </div>
+          )}
+
+          {/* ITINERARY TAB */}
+          {tab === 'itinerary' && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.375rem', fontWeight: 600, color: 'var(--color-navy)' }}>
+                  Itinerary — {itinerary?.totalDays ?? 0} days
+                </h2>
+              </div>
+              {itinerary && (
+                <ItineraryTimeline
+                  days={itinerary.days}
+                  tripId={tripId!}
+                  onAddItem={addItem}
+                  onDeleteItem={removeItem}
+                  onDeleteDay={(dayId) => removeDay(dayId).then(refreshItinerary)}
+                  onMoveItem={moveItem}
+                />
               )}
-
-              <TravelerManager tripId={tripId!} travelers={travelers} onRefresh={refresh} />
             </div>
+          )}
 
-            {/* Right — flights, hotels, activities */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Flights */}
-              <div>
-                <h3 className="text-slate-300 font-medium text-sm mb-3">✈️ Flights ({flights.length})</h3>
-                {flights.length === 0 ? (
-                  <div className="bg-slate-800/30 border border-dashed border-slate-700 rounded-xl p-4 text-center">
-                    <p className="text-slate-500 text-xs">Search and add flights from the <Link to="/search" className="text-blue-400 hover:underline">Search page</Link></p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {flights.map(f => (
-                      <div key={f.id} className="flex items-center gap-3 p-3 bg-slate-800/50 border border-slate-700/40 rounded-xl">
-                        <div className="flex-1">
-                          <p className="text-sm text-white font-medium">{f.origin} → {f.destination}</p>
-                          <p className="text-xs text-slate-400">{f.airline ?? f.provider} · {f.cabinClass ?? ''}</p>
-                          <p className="text-xs text-amber-400 italic">{f.statusNote}</p>
-                        </div>
-                        <p className="text-sm font-semibold text-blue-300">{f.currency} {f.priceAmount.toLocaleString()}</p>
-                        <button onClick={() => removeFlight(tripId!, f.id).then(refresh)} className="text-xs text-slate-500 hover:text-red-400 px-1" aria-label="Remove flight">✕</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+          {/* BUDGET TAB */}
+          {tab === 'budget' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              {budget && <BudgetOverview budget={budget} />}
+              {budget && (
+                <ExpenseList expenses={expenses} onAdd={addExpense} onEdit={editExpense} onDelete={removeExpense} currency={trip.currency} />
+              )}
+            </div>
+          )}
 
-              {/* Hotels */}
-              <div>
-                <h3 className="text-slate-300 font-medium text-sm mb-3">🏨 Hotels ({hotels.length})</h3>
-                {hotels.length === 0 ? (
-                  <div className="bg-slate-800/30 border border-dashed border-slate-700 rounded-xl p-4 text-center">
-                    <p className="text-slate-500 text-xs">Search and add hotels from the <Link to="/search" className="text-blue-400 hover:underline">Search page</Link></p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {hotels.map(h => (
-                      <div key={h.id} className="flex items-center gap-3 p-3 bg-slate-800/50 border border-slate-700/40 rounded-xl">
-                        <div className="flex-1">
-                          <p className="text-sm text-white font-medium">{h.hotelName}</p>
-                          <p className="text-xs text-slate-400">{h.checkIn} → {h.checkOut} · {h.roomType ?? ''}</p>
-                          <p className="text-xs text-amber-400 italic">{h.statusNote}</p>
-                        </div>
-                        <p className="text-sm font-semibold text-blue-300">{h.currency} {h.priceAmount.toLocaleString()}</p>
-                        <button onClick={() => removeHotel(tripId!, h.id).then(refresh)} className="text-xs text-slate-500 hover:text-red-400 px-1" aria-label="Remove hotel">✕</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Activities */}
-              <div>
-                <h3 className="text-slate-300 font-medium text-sm mb-3">🎭 Activities ({activities.length})</h3>
-                {activities.length === 0 ? (
-                  <div className="bg-slate-800/30 border border-dashed border-slate-700 rounded-xl p-4 text-center">
-                    <p className="text-slate-500 text-xs">Search and add activities from the <Link to="/search" className="text-blue-400 hover:underline">Search page</Link></p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {activities.map(a => (
-                      <div key={a.id} className="flex items-center gap-3 p-3 bg-slate-800/50 border border-slate-700/40 rounded-xl">
-                        <div className="flex-1">
-                          <p className="text-sm text-white font-medium">{a.activityName}</p>
-                          <p className="text-xs text-slate-400">{a.activityDate ?? ''} {a.category ? `· ${a.category}` : ''}</p>
-                        </div>
-                        {a.priceAmount > 0 && <p className="text-sm font-semibold text-blue-300">{a.currency} {a.priceAmount.toLocaleString()}</p>}
-                        <button onClick={() => removeActivity(tripId!, a.id).then(refresh)} className="text-xs text-slate-500 hover:text-red-400 px-1" aria-label="Remove activity">✕</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+          {/* AI PLACEHOLDER */}
+          {tab === 'ai' && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}>
+              <div style={{ textAlign: 'center', maxWidth: 400 }}>
+                <div style={{ fontSize: '4rem', marginBottom: '1.5rem' }}>🤖</div>
+                <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', fontWeight: 600, color: 'var(--color-navy)', marginBottom: '0.75rem' }}>
+                  AI Travel Planner
+                </h2>
+                <p style={{ color: 'var(--color-muted)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+                  The AI-powered itinerary assistant is coming in Phase 7. It will suggest daily schedules, optimize your budget, and find local gems.
+                </p>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(212,160,23,0.08)', border: '1px solid rgba(212,160,23,0.2)', borderRadius: 'var(--radius-full)', color: 'var(--color-warning)', fontSize: '0.8125rem', fontWeight: 600 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-warning)', display: 'inline-block' }} />
+                  Phase 7 — Coming Soon
+                </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* ITINERARY TAB */}
-        {tab === 'itinerary' && (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-slate-200 font-semibold">Itinerary — {itinerary?.totalDays ?? 0} days</h2>
-            </div>
-            {itinerary && (
-              <ItineraryTimeline
-                days={itinerary.days}
-                tripId={tripId!}
-                onAddItem={addItem}
-                onDeleteItem={removeItem}
-                onDeleteDay={(dayId) => deleteDay(dayId).then(refreshItinerary)}
-                onMoveItem={moveItem}
-              />
-            )}
-          </div>
-        )}
-
-        {/* BUDGET TAB */}
-        {tab === 'budget' && (
-          <div className="space-y-8">
-            {budget && <BudgetOverview budget={budget} />}
-            {budget && (
-              <ExpenseList
-                expenses={expenses}
-                onAdd={addExpense}
-                onEdit={editExpense}
-                onDelete={removeExpense}
-                currency={trip.currency}
-              />
-            )}
-          </div>
-        )}
-
-        {/* AI PLACEHOLDER TAB */}
-        {tab === 'ai' && (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center max-w-sm">
-              <p className="text-5xl mb-4">🤖</p>
-              <h2 className="text-xl font-semibold text-slate-200 mb-2">AI Travel Planner</h2>
-              <p className="text-slate-400 text-sm">The AI-powered itinerary assistant is coming in Phase 7.</p>
-              <p className="text-slate-500 text-xs mt-2">It will suggest daily schedules, optimize your budget, and find local gems based on your preferences.</p>
-              <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-400 text-xs">
-                <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-                Phase 7 — Not implemented
-              </div>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <DeleteConfirmModal

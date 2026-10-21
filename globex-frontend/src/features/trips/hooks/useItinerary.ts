@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as api from '../api/tripApi';
-import type { ItineraryResponse, CreateItineraryDayRequest, CreateItineraryItemRequest, ItineraryItem } from '../types/trip.types';
+import type { ItineraryResponse, CreateItineraryDayRequest, CreateItineraryItemRequest } from '../types/trip.types';
 
 export function useItinerary(tripId: string) {
   const [itinerary, setItinerary] = useState<ItineraryResponse | null>(null);

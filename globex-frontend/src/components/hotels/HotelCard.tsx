@@ -10,9 +10,9 @@ const AMENITY_ICONS: Record<string, string> = {
 
 function StarRating({ stars }: { stars: number }) {
   return (
-    <div className="flex gap-0.5">
+    <div style={{ display: 'flex', gap: '0.125rem' }}>
       {Array.from({ length: 5 }).map((_, i) => (
-        <span key={i} className={`text-xs ${i < stars ? 'text-amber-400' : 'text-slate-700'}`}>★</span>
+        <span key={i} style={{ fontSize: '0.75rem', color: i < stars ? '#F59E0B' : '#CBD5E1' }}>★</span>
       ))}
     </div>
   );
@@ -26,90 +26,92 @@ interface Props {
 export default function HotelCard({ hotel, index }: Props) {
   return (
     <div
-      className="group rounded-2xl border border-white/8 bg-white/4 hover:bg-white/7
-                 hover:border-blue-500/30 transition-all duration-300 overflow-hidden flex gap-0 md:flex-row flex-col"
-      style={{ animationDelay: `${index * 60}ms` }}
+      style={{
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        borderRadius: 'var(--radius-xl)',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'row',
+        transition: 'box-shadow 0.2s, border-color 0.2s',
+        animationDelay: `${index * 60}ms`,
+      }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-md)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-teal)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'; }}
     >
       {/* Image */}
-      <div className="relative w-full md:w-52 h-44 md:h-auto shrink-0 overflow-hidden">
+      <div style={{ position: 'relative', width: '13rem', flexShrink: 0, overflow: 'hidden' }}>
         {hotel.mainImageUrl ? (
-          <img
-            src={hotel.mainImageUrl}
-            alt={hotel.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+          <img src={hotel.mainImageUrl} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.05)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1)'; }} />
         ) : (
-          <div className="w-full h-full bg-white/5 flex items-center justify-center text-4xl">🏨</div>
+          <div style={{ width: '100%', height: '100%', background: 'var(--color-sand)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem' }}>🏨</div>
         )}
         {hotel.isTestData && (
-          <div className="absolute top-2 left-2 bg-purple-500/30 backdrop-blur-sm text-purple-300
-                          text-[10px] font-bold px-2 py-0.5 rounded-full border border-purple-500/40">
+          <div style={{ position: 'absolute', top: '0.5rem', left: '0.5rem', background: '#EDE9FE', color: '#7C3AED', fontSize: '0.625rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '9999px', border: '1px solid #C4B5FD' }}>
             🎭 Demo
           </div>
         )}
         {hotel.freeCancellation && (
-          <div className="absolute bottom-2 left-2 bg-emerald-500/25 backdrop-blur-sm text-emerald-400
-                          text-[10px] font-semibold px-2 py-0.5 rounded-full border border-emerald-500/30">
+          <div style={{ position: 'absolute', bottom: '0.5rem', left: '0.5rem', background: '#DCFCE7', color: '#166534', fontSize: '0.625rem', fontWeight: 600, padding: '0.15rem 0.5rem', borderRadius: '9999px', border: '1px solid #BBF7D0' }}>
             Free Cancel
           </div>
         )}
       </div>
 
       {/* Content */}
-      <div className="flex-1 p-4 flex flex-col justify-between">
+      <div style={{ flex: 1, padding: '1rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <div>
-          <div className="flex items-start justify-between gap-3 mb-1">
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.25rem' }}>
             <div>
-              <h3 className="text-white font-semibold text-base leading-snug mb-1">{hotel.name}</h3>
+              <h3 style={{ color: 'var(--color-navy)', fontWeight: 600, fontSize: '1rem', marginBottom: '0.25rem' }}>{hotel.name}</h3>
               <StarRating stars={hotel.stars} />
             </div>
-            <div className="text-right shrink-0">
-              <div className="text-2xl font-bold text-white">
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-navy)' }}>
                 {hotel.pricePerNight.currency} {Number(hotel.pricePerNight.amount).toLocaleString()}
               </div>
-              <div className="text-slate-500 text-xs">per night</div>
+              <div style={{ color: 'var(--color-slate)', fontSize: '0.75rem' }}>per night</div>
               {hotel.nights > 1 && (
-                <div className="text-slate-400 text-xs mt-0.5">
+                <div style={{ color: 'var(--color-slate)', fontSize: '0.75rem', marginTop: '0.15rem' }}>
                   Total: {hotel.totalPrice.currency} {Number(hotel.totalPrice.amount).toLocaleString()}
                 </div>
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-2">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.75rem', color: 'var(--color-slate)', marginBottom: '0.5rem' }}>
             <span>📍</span>
-            <span className="truncate">{hotel.location}</span>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{hotel.location}</span>
             {hotel.guestRating && (
               <>
-                <span className="text-slate-700">·</span>
-                <span className="text-emerald-400 font-semibold">⭐ {hotel.guestRating.toFixed(1)}</span>
+                <span style={{ color: 'var(--color-border)' }}>·</span>
+                <span style={{ color: '#16A34A', fontWeight: 600 }}>⭐ {hotel.guestRating.toFixed(1)}</span>
               </>
             )}
           </div>
 
           {/* Amenities */}
-          <div className="flex flex-wrap gap-1.5 mb-3">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: '0.75rem' }}>
             {hotel.amenities.slice(0, 6).map(a => (
-              <span key={a} className="text-xs px-2 py-0.5 rounded-full bg-white/5 border border-white/8 text-slate-400">
+              <span key={a} style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '9999px', background: 'var(--color-ivory)', border: '1px solid var(--color-border)', color: 'var(--color-slate)' }}>
                 {AMENITY_ICONS[a] || '•'} {a.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
               </span>
             ))}
             {hotel.amenities.length > 6 && (
-              <span className="text-xs text-slate-600">+{hotel.amenities.length - 6} more</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-slate)' }}>+{hotel.amenities.length - 6} more</span>
             )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-white/5">
-          <div className="text-xs text-slate-500 flex gap-3">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: '1px solid var(--color-border)' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--color-slate)', display: 'flex', gap: '0.75rem' }}>
             <span>🛏️ {hotel.roomType}</span>
-            {hotel.breakfastIncluded && <span className="text-emerald-400">🍳 Breakfast</span>}
+            {hotel.breakfastIncluded && <span style={{ color: '#16A34A' }}>🍳 Breakfast</span>}
           </div>
-          <button
-            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold
-                       rounded-lg transition-colors duration-200"
-          >
+          <button style={{ padding: '0.375rem 1rem', background: 'var(--color-navy)', color: '#fff', fontSize: '0.75rem', fontWeight: 600, border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', transition: 'background 0.2s' }}>
             View Hotel →
           </button>
         </div>
